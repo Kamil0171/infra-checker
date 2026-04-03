@@ -1,43 +1,36 @@
-* {
-    box-sizing: border-box;
+.check-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 24px 0;
 }
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f7fb;
-    color: #1f2937;
+.check-form input {
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 16px;
 }
 
-.container {
-    max-width: 720px;
-    margin: 60px auto;
-    background: #ffffff;
-    padding: 32px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+.check-form button {
+    width: 140px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
 }
 
-h1 {
-    margin-top: 0;
-    margin-bottom: 8px;
+.check-form button:hover {
+    background: #1d4ed8;
 }
 
-.subtitle {
-    margin-top: 0;
-    color: #4b5563;
-}
-
-.info-box {
+.result-box {
     margin-top: 24px;
     padding: 16px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #eef6ff;
+    border: 1px solid #bfdbfe;
     border-radius: 8px;
-}
-
-code {
-    background: #e5e7eb;
-    padding: 2px 6px;
-    border-radius: 4px;
 }

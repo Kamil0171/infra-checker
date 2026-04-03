@@ -11,11 +11,32 @@
         <h1>Infra Checker</h1>
         <p class="subtitle">Lightweight website health-check tool.</p>
 
+        <form action="/check" method="get" class="check-form">
+            <label for="url">Website URL</label>
+            <input
+                type="text"
+                id="url"
+                name="url"
+                placeholder="https://example.com"
+                value="{{ submitted_url }}"
+                required
+            >
+            <button type="submit">Check</button>
+        </form>
+
         <section class="info-box">
             <h2>Application status</h2>
             <p>The application is running correctly.</p>
             <p>Health endpoint: <code>/health</code></p>
         </section>
+
+        {% if result %}
+        <section class="result-box">
+            <h2>Result</h2>
+            <p><strong>Submitted URL:</strong> {{ submitted_url }}</p>
+            <p>{{ result.message }}</p>
+        </section>
+        {% endif %}
     </main>
 </body>
 </html>

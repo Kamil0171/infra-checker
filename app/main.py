@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -23,5 +23,24 @@ def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={},
+        context={
+            "submitted_url": "",
+            "result": None,
+        },
+    )
+
+
+@app.get("/check", response_class=HTMLResponse)
+def check_page(request: Request, url: str = Query(..., min_length=1)):
+    cleaned_url = url.strip()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "submitted_url": cleaned_url,
+            "result": {
+                "message": "Form submission works correctly. Real HTTP and SSL checks will be added next."
+            },
+        },
     )
