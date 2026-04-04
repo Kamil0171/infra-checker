@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.schemas import CheckResponse, HttpCheckResult, SSLCheckResult
 from app.services.http_check import check_http
 from app.services.ssl_check import check_ssl
 
@@ -14,6 +15,19 @@ app = FastAPI(title="Infra Checker", version="0.1.0")
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+def build_check_response(url: str) -> CheckResponse:
+    cleaned_url = url.strip()
+
+    http_result = HttpCheckResult(**check_http(cleaned_url))
+    ssl_result = SSLCheckResult(**check_ssl(cleaned_url))
+
+    return CheckResponse(
+        submitted_url=cleaned_url,
+        http=http_result,
+        ssl=ssl_result,
+    )
 
 
 @app.get("/health")
@@ -35,18 +49,18 @@ def home(request: Request):
 
 @app.get("/check", response_class=HTMLResponse)
 def check_page(request: Request, url: str = Query(..., min_length=1)):
-    cleaned_url = url.strip()
-    http_result = check_http(cleaned_url)
-    ssl_result = check_ssl(cleaned_url)
+    result = build_check_response(url)
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
-            "submitted_url": cleaned_url,
-            "result": {
-                "http": http_result,
-                "ssl": ssl_result,
-            },
+            "submitted_url": result.submitted_url,
+            "result": result,
         },
     )
+
+
+@app.get("/api/check", response_model=CheckResponse)
+def api_check(url: str = Query(..., min_length=1)):
+    return build_check_response(url)
