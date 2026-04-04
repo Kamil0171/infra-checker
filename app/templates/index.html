@@ -32,9 +32,22 @@
 
         {% if result %}
         <section class="result-box">
-            <h2>Result</h2>
+            <h2>HTTP Check Result</h2>
             <p><strong>Submitted URL:</strong> {{ submitted_url }}</p>
-            <p>{{ result.message }}</p>
+            <p><strong>Checked URL:</strong> {{ result.checked_url }}</p>
+            <p><strong>Host responded:</strong> {% if result.is_up %}Yes{% else %}No{% endif %}</p>
+
+            {% if result.status_code is not none %}
+            <p><strong>HTTP status code:</strong> {{ result.status_code }}</p>
+            {% endif %}
+
+            {% if result.response_time_ms is not none %}
+            <p><strong>Response time:</strong> {{ result.response_time_ms }} ms</p>
+            {% endif %}
+
+            {% if result.error %}
+            <p class="error-text"><strong>Error:</strong> {{ result.error }}</p>
+            {% endif %}
         </section>
         {% endif %}
     </main>

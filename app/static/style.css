@@ -34,3 +34,12 @@
     border: 1px solid #bfdbfe;
     border-radius: 8px;
 }
+
+.result-box p {
+    margin: 8px 0;
+}
+
+.error-text {
+    color: #b91c1c;
+    font-weight: bold;
+}

@@ -19,9 +19,22 @@ def test_home_page_returns_200():
     assert "Infra Checker" in response.text
 
 
-def test_check_page_returns_submitted_url():
-    response = client.get("/check", params={"url": "https://example.com"})
+def test_check_page_renders_http_result(mocker):
+    mocker.patch(
+        "app.main.check_http",
+        return_value={
+            "checked_url": "https://example.com",
+            "is_up": True,
+            "status_code": 200,
+            "response_time_ms": 123.45,
+            "error": None,
+        },
+    )
+
+    response = client.get("/check", params={"url": "example.com"})
 
     assert response.status_code == 200
+    assert "example.com" in response.text
     assert "https://example.com" in response.text
-    assert "Form submission works correctly" in response.text
+    assert "200" in response.text
+    assert "123.45 ms" in response.text

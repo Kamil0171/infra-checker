@@ -5,6 +5,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.services.http_check import check_http
+
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="Infra Checker", version="0.1.0")
@@ -33,14 +35,13 @@ def home(request: Request):
 @app.get("/check", response_class=HTMLResponse)
 def check_page(request: Request, url: str = Query(..., min_length=1)):
     cleaned_url = url.strip()
+    http_result = check_http(cleaned_url)
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             "submitted_url": cleaned_url,
-            "result": {
-                "message": "Form submission works correctly. Real HTTP and SSL checks will be added next."
-            },
+            "result": http_result,
         },
     )
