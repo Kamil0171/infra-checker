@@ -5,74 +5,193 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infra Checker</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/app.js" defer></script>
 </head>
 <body>
-    <main class="container">
-        <h1>Infra Checker</h1>
-        <p class="subtitle">Lightweight website health-check tool.</p>
+    <main class="page-shell">
+        <section class="hero">
+            <h1>Infra Checker</h1>
+            <p class="subtitle">
+                Check website availability, HTTP response details, and SSL/TLS certificate status.
+            </p>
 
-        <form action="/check" method="get" class="check-form">
-            <label for="url">Website URL</label>
-            <input
-                type="text"
-                id="url"
-                name="url"
-                placeholder="https://example.com"
-                value="{{ submitted_url }}"
-                required
-            >
-            <button type="submit">Check</button>
-        </form>
+            <div class="hero-tags">
+                <span>FastAPI</span>
+                <span>Python 3.12</span>
+                <span>HTTP</span>
+                <span>SSL/TLS</span>
+            </div>
+        </section>
 
-        <section class="info-box">
-            <h2>Application status</h2>
-            <p>The application is running correctly.</p>
-            <p>Health endpoint: <code>/health</code></p>
+        <section class="panel">
+            <form action="/check" method="get" class="check-form" id="check-form">
+                <label for="url">Website URL</label>
+
+                <div class="input-row">
+                    <input
+                        type="text"
+                        id="url"
+                        name="url"
+                        placeholder="https://example.com"
+                        value="{{ submitted_url }}"
+                        required
+                    >
+                    <button type="submit" id="check-button">Check</button>
+                </div>
+
+                <p class="form-hint">
+                    You can enter a full URL like <code>https://example.com</code> or just <code>example.com</code>.
+                </p>
+            </form>
+        </section>
+
+        <section class="panel panel-muted">
+            <div class="section-header centered-header">
+                <h2>Application status</h2>
+                <span class="status-badge status-ok">Running</span>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-tile">
+                    <span>Health endpoint</span>
+                    <strong>/health</strong>
+                </div>
+                <div class="status-tile">
+                    <span>Frontend mode</span>
+                    <strong>Template + static assets</strong>
+                </div>
+            </div>
         </section>
 
         {% if result %}
-        <section class="result-box">
-            <h2>HTTP Check Result</h2>
-            <p><strong>Submitted URL:</strong> {{ submitted_url }}</p>
-            <p><strong>Checked URL:</strong> {{ result.http.checked_url }}</p>
-            <p><strong>Host responded:</strong> {% if result.http.is_up %}Yes{% else %}No{% endif %}</p>
+        <section class="results-grid">
+            <article class="result-card">
+                <div class="section-header centered-header">
+                    <h2>HTTP Check</h2>
+                    {% if result.http.is_up %}
+                        <span class="status-badge status-ok">Responding</span>
+                    {% else %}
+                        <span class="status-badge status-error">Issue detected</span>
+                    {% endif %}
+                </div>
 
-            {% if result.http.status_code is not none %}
-            <p><strong>HTTP status code:</strong> {{ result.http.status_code }}</p>
-            {% endif %}
+                <div class="result-list">
+                    <div class="result-item">
+                        <span>Submitted URL</span>
+                        <strong>{{ submitted_url }}</strong>
+                    </div>
 
-            {% if result.http.response_time_ms is not none %}
-            <p><strong>Response time:</strong> {{ result.http.response_time_ms }} ms</p>
-            {% endif %}
+                    <div class="result-item">
+                        <span>Checked URL</span>
+                        <strong>{{ result.http.checked_url }}</strong>
+                    </div>
 
-            {% if result.http.error %}
-            <p class="error-text"><strong>Error:</strong> {{ result.http.error }}</p>
-            {% endif %}
-        </section>
+                    <div class="result-item">
+                        <span>Host responded</span>
+                        <strong>{% if result.http.is_up %}Yes{% else %}No{% endif %}</strong>
+                    </div>
 
-        <section class="result-box">
-            <h2>SSL/TLS Check Result</h2>
-            <p><strong>Checked URL:</strong> {{ result.ssl.checked_url }}</p>
+                    <div class="result-item">
+                        <span>Status code</span>
+                        <strong>
+                            {% if result.http.status_code is not none %}
+                                {{ result.http.status_code }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
 
-            {% if result.ssl.ssl_enabled is sameas false %}
-            <p><strong>SSL/TLS:</strong> Not available for non-HTTPS URL</p>
-            {% else %}
-                {% if result.ssl.ssl_valid is not none %}
-                <p><strong>Certificate valid:</strong> {% if result.ssl.ssl_valid %}Yes{% else %}No{% endif %}</p>
+                    <div class="result-item">
+                        <span>Response time</span>
+                        <strong>
+                            {% if result.http.response_time_ms is not none %}
+                                {{ result.http.response_time_ms }} ms
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                {% if result.http.error %}
+                <p class="error-text">{{ result.http.error }}</p>
                 {% endif %}
+            </article>
 
-                {% if result.ssl.ssl_expires_at %}
-                <p><strong>Expires at:</strong> {{ result.ssl.ssl_expires_at }}</p>
-                {% endif %}
+            <article class="result-card">
+                <div class="section-header centered-header">
+                    <h2>SSL/TLS Check</h2>
+                    {% if result.ssl.ssl_enabled is sameas false %}
+                        <span class="status-badge status-neutral">No TLS</span>
+                    {% elif result.ssl.ssl_valid %}
+                        <span class="status-badge status-ok">Valid</span>
+                    {% else %}
+                        <span class="status-badge status-error">Check failed</span>
+                    {% endif %}
+                </div>
 
-                {% if result.ssl.ssl_days_left is not none %}
-                <p><strong>Days left:</strong> {{ result.ssl.ssl_days_left }}</p>
+                <div class="result-list">
+                    <div class="result-item">
+                        <span>Checked URL</span>
+                        <strong>{{ result.ssl.checked_url }}</strong>
+                    </div>
+
+                    <div class="result-item">
+                        <span>SSL/TLS enabled</span>
+                        <strong>
+                            {% if result.ssl.ssl_enabled is sameas false %}
+                                No
+                            {% elif result.ssl.ssl_enabled %}
+                                Yes
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="result-item">
+                        <span>Certificate valid</span>
+                        <strong>
+                            {% if result.ssl.ssl_valid is not none %}
+                                {% if result.ssl.ssl_valid %}Yes{% else %}No{% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="result-item">
+                        <span>Expires at</span>
+                        <strong>
+                            {% if result.ssl.ssl_expires_at %}
+                                {{ result.ssl.ssl_expires_at }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="result-item">
+                        <span>Days left</span>
+                        <strong>
+                            {% if result.ssl.ssl_days_left is not none %}
+                                {{ result.ssl.ssl_days_left }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                {% if result.ssl.ssl_enabled is sameas false %}
+                <p class="neutral-text">SSL/TLS check is skipped for non-HTTPS addresses.</p>
                 {% endif %}
 
                 {% if result.ssl.error %}
-                <p class="error-text"><strong>Error:</strong> {{ result.ssl.error }}</p>
+                <p class="error-text">{{ result.ssl.error }}</p>
                 {% endif %}
-            {% endif %}
+            </article>
         </section>
         {% endif %}
     </main>
