@@ -34,19 +34,44 @@
         <section class="result-box">
             <h2>HTTP Check Result</h2>
             <p><strong>Submitted URL:</strong> {{ submitted_url }}</p>
-            <p><strong>Checked URL:</strong> {{ result.checked_url }}</p>
-            <p><strong>Host responded:</strong> {% if result.is_up %}Yes{% else %}No{% endif %}</p>
+            <p><strong>Checked URL:</strong> {{ result.http.checked_url }}</p>
+            <p><strong>Host responded:</strong> {% if result.http.is_up %}Yes{% else %}No{% endif %}</p>
 
-            {% if result.status_code is not none %}
-            <p><strong>HTTP status code:</strong> {{ result.status_code }}</p>
+            {% if result.http.status_code is not none %}
+            <p><strong>HTTP status code:</strong> {{ result.http.status_code }}</p>
             {% endif %}
 
-            {% if result.response_time_ms is not none %}
-            <p><strong>Response time:</strong> {{ result.response_time_ms }} ms</p>
+            {% if result.http.response_time_ms is not none %}
+            <p><strong>Response time:</strong> {{ result.http.response_time_ms }} ms</p>
             {% endif %}
 
-            {% if result.error %}
-            <p class="error-text"><strong>Error:</strong> {{ result.error }}</p>
+            {% if result.http.error %}
+            <p class="error-text"><strong>Error:</strong> {{ result.http.error }}</p>
+            {% endif %}
+        </section>
+
+        <section class="result-box">
+            <h2>SSL/TLS Check Result</h2>
+            <p><strong>Checked URL:</strong> {{ result.ssl.checked_url }}</p>
+
+            {% if result.ssl.ssl_enabled is sameas false %}
+            <p><strong>SSL/TLS:</strong> Not available for non-HTTPS URL</p>
+            {% else %}
+                {% if result.ssl.ssl_valid is not none %}
+                <p><strong>Certificate valid:</strong> {% if result.ssl.ssl_valid %}Yes{% else %}No{% endif %}</p>
+                {% endif %}
+
+                {% if result.ssl.ssl_expires_at %}
+                <p><strong>Expires at:</strong> {{ result.ssl.ssl_expires_at }}</p>
+                {% endif %}
+
+                {% if result.ssl.ssl_days_left is not none %}
+                <p><strong>Days left:</strong> {{ result.ssl.ssl_days_left }}</p>
+                {% endif %}
+
+                {% if result.ssl.error %}
+                <p class="error-text"><strong>Error:</strong> {{ result.ssl.error }}</p>
+                {% endif %}
             {% endif %}
         </section>
         {% endif %}

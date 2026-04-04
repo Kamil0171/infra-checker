@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.services.http_check import check_http
+from app.services.ssl_check import check_ssl
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -36,12 +37,16 @@ def home(request: Request):
 def check_page(request: Request, url: str = Query(..., min_length=1)):
     cleaned_url = url.strip()
     http_result = check_http(cleaned_url)
+    ssl_result = check_ssl(cleaned_url)
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             "submitted_url": cleaned_url,
-            "result": http_result,
+            "result": {
+                "http": http_result,
+                "ssl": ssl_result,
+            },
         },
     )
