@@ -3,7 +3,7 @@
 Infra Checker is a lightweight web application for basic website health checks.
 
 ## Goal
-The project is being built as a practical portfolio project focused on:
+This project is focused on:
 - DevOps basics
 - Linux / system administration mindset
 - HTTP/HTTPS troubleshooting
