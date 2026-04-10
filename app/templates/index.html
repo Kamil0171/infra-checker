@@ -42,6 +42,8 @@
                 <p class="form-hint">
                     You can enter a full URL like <code>https://example.com</code> or just <code>example.com</code>.
                 </p>
+
+                <div id="form-message" class="form-message" hidden></div>
             </form>
         </section>
 
@@ -63,8 +65,8 @@
             </div>
         </section>
 
-        {% if result %}
-        <section class="results-grid">
+        <section id="results-container" class="{% if result %}results-grid{% endif %}">
+            {% if result %}
             <article class="result-card">
                 <div class="section-header centered-header">
                     <h2>HTTP Check</h2>
@@ -192,8 +194,8 @@
                 <p class="error-text">{{ result.ssl.error }}</p>
                 {% endif %}
             </article>
+            {% endif %}
         </section>
-        {% endif %}
     </main>
 </body>
 </html>
