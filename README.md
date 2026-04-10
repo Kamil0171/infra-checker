@@ -1,8 +1,9 @@
 # Infra Checker
 
-Infra Checker is a lightweight web application for basic website health checks.
+Infra Checker is a lightweight web application for checking basic website health, HTTP response details, and SSL/TLS certificate status.
 
 ## Goal
+
 This project is focused on:
 - DevOps basics
 - Linux / system administration mindset
@@ -10,29 +11,56 @@ This project is focused on:
 - SSL certificate checking
 - automation-oriented tooling
 
-## Planned MVP features
-- check whether a website is reachable
-- return HTTP status code
-- measure response time
-- validate SSL/TLS certificate
-- calculate days until certificate expiration
-- return connection-related errors
+## Current features
+
+- website availability check
+- HTTP status code check
+- response time measurement
+- SSL/TLS certificate validation
+- certificate expiration date check
+- days left until certificate expiration
+- basic frontend with dynamic result rendering
+- JSON API endpoint for checks
+- automated tests with pytest
+- Docker support
+- GitHub Actions CI
 
 ## Tech stack
+
 - Python 3.12
 - FastAPI
 - Uvicorn
 - httpx
 - pytest
-- HTML / CSS
+- HTML / CSS / JavaScript
+- Docker
+- GitHub Actions
 
 ## Project structure
+
 ```text
 infra-checker/
 ├── app/
+│   ├── main.py
+│   ├── schemas.py
+│   ├── services/
+│   │   ├── http_check.py
+│   │   └── ssl_check.py
+│   ├── templates/
+│   │   └── index.html
+│   └── static/
+│       ├── style.css
+│       └── app.js
 ├── tests/
+│   ├── test_health.py
+│   ├── test_http_check.py
+│   └── test_ssl_check.py
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── requirements.txt
-├── README.md
-├── .gitignore
+├── pytest.ini
 ├── Dockerfile
-└── .github/workflows/ci.yml
+├── .dockerignore
+├── .gitignore
+└── README.md
