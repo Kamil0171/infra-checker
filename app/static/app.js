@@ -90,6 +90,98 @@ document.addEventListener("DOMContentLoaded", () => {
         return value ? "Yes" : "No";
     }
 
+    function formatHttpStatusLabel(statusCode) {
+        if (statusCode === null || statusCode === undefined) {
+            return "—";
+        }
+
+        if (statusCode >= 200 && statusCode < 300) {
+            return `${statusCode} (Success)`;
+        }
+
+        if (statusCode >= 300 && statusCode < 400) {
+            return `${statusCode} (Redirect)`;
+        }
+
+        if (statusCode >= 400 && statusCode < 500) {
+            return `${statusCode} (Client error)`;
+        }
+
+        if (statusCode >= 500) {
+            return `${statusCode} (Server error)`;
+        }
+
+        return String(statusCode);
+    }
+
+    function getHttpStatusBadge(statusCode, isUp) {
+        if (!isUp) {
+            return `<span class="inline-badge inline-badge-error">Unavailable</span>`;
+        }
+
+        if (statusCode >= 200 && statusCode < 300) {
+            return `<span class="inline-badge inline-badge-success">2xx</span>`;
+        }
+
+        if (statusCode >= 300 && statusCode < 400) {
+            return `<span class="inline-badge inline-badge-neutral">3xx</span>`;
+        }
+
+        if (statusCode >= 400 && statusCode < 500) {
+            return `<span class="inline-badge inline-badge-warning">4xx</span>`;
+        }
+
+        if (statusCode >= 500) {
+            return `<span class="inline-badge inline-badge-error">5xx</span>`;
+        }
+
+        return `<span class="inline-badge inline-badge-neutral">Unknown</span>`;
+    }
+
+    function formatIsoDate(isoString) {
+        if (!isoString) {
+            return "—";
+        }
+
+        const date = new Date(isoString);
+
+        if (Number.isNaN(date.getTime())) {
+            return escapeHtml(isoString);
+        }
+
+        return escapeHtml(
+            date.toLocaleString("en-GB", {
+                year: "numeric",
+                month: "short",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                timeZoneName: "short",
+            })
+        );
+    }
+
+    function getDaysLeftBadge(daysLeft) {
+        if (daysLeft === null || daysLeft === undefined) {
+            return "";
+        }
+
+        if (daysLeft < 0) {
+            return `<span class="inline-badge inline-badge-error">Expired</span>`;
+        }
+
+        if (daysLeft <= 14) {
+            return `<span class="inline-badge inline-badge-error">Urgent</span>`;
+        }
+
+        if (daysLeft <= 30) {
+            return `<span class="inline-badge inline-badge-warning">Expiring soon</span>`;
+        }
+
+        return `<span class="inline-badge inline-badge-success">Healthy</span>`;
+    }
+
     function getHttpBadge(http) {
         if (http.is_up) {
             return `<span class="status-badge status-ok">Responding</span>`;
@@ -151,7 +243,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="result-item">
                         <span>Status code</span>
-                        <strong>${renderValue(http.status_code)}</strong>
+                        <strong>
+                            ${renderValue(formatHttpStatusLabel(http.status_code))}
+                            ${http.status_code !== null && http.status_code !== undefined ? getHttpStatusBadge(http.status_code, http.is_up) : ""}
+                        </strong>
                     </div>
 
                     <div class="result-item">
@@ -187,12 +282,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="result-item">
                         <span>Expires at</span>
-                        <strong>${renderValue(ssl.ssl_expires_at)}</strong>
+                        <strong>${formatIsoDate(ssl.ssl_expires_at)}</strong>
                     </div>
 
                     <div class="result-item">
                         <span>Days left</span>
-                        <strong>${renderValue(ssl.ssl_days_left)}</strong>
+                        <strong>
+                            ${renderValue(ssl.ssl_days_left)}
+                            ${getDaysLeftBadge(ssl.ssl_days_left)}
+                        </strong>
                     </div>
                 </div>
 
