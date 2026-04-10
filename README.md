@@ -1,4 +1,9 @@
 # Infra Checker
+[![CI](https://github.com/Kamil0171/infra-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/Kamil0171/infra-checker/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-web%20app-009688)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED)
+![Status](https://img.shields.io/badge/status-MVP-success)
 
 Infra Checker is a lightweight web application for checking basic website health, HTTP response details, and SSL/TLS certificate status.
 
