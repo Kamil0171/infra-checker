@@ -1,19 +1,11 @@
 import httpx
 
-from app.services.http_check import check_http, normalize_url
+from app.services.http_check import check_http
 
 
 class MockResponse:
     def __init__(self, status_code: int):
         self.status_code = status_code
-
-
-def test_normalize_url_adds_https_scheme():
-    assert normalize_url("example.com") == "https://example.com"
-
-
-def test_normalize_url_keeps_existing_scheme():
-    assert normalize_url("http://example.com") == "http://example.com"
 
 
 def test_check_http_returns_success_result(mocker):
@@ -43,3 +35,13 @@ def test_check_http_returns_timeout_error(mocker):
     assert result["is_up"] is False
     assert result["status_code"] is None
     assert result["error"] == "Request timed out"
+
+
+def test_check_http_rejects_space_in_url():
+    result = check_http("bad url")
+
+    assert result["checked_url"] == ""
+    assert result["is_up"] is False
+    assert result["status_code"] is None
+    assert result["response_time_ms"] is None
+    assert result["error"] == "URL cannot contain spaces"

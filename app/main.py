@@ -6,9 +6,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
+from app.logging_config import configure_logging
 from app.schemas import CheckResponse, HttpCheckResult, SSLCheckResult
 from app.services.http_check import check_http
 from app.services.ssl_check import check_ssl
+
+configure_logging()
 
 BASE_DIR = Path(__file__).resolve().parent
 settings = get_settings()

@@ -1,44 +1,47 @@
+import logging
 import time
 
 import httpx
 
 from app.config import get_settings
+from app.services.url_utils import prepare_url
 
-
-def normalize_url(url: str) -> str:
-    cleaned_url = url.strip()
-
-    if not cleaned_url.startswith(("http://", "https://")):
-        return f"https://{cleaned_url}"
-
-    return cleaned_url
+logger = logging.getLogger(__name__)
 
 
 def check_http(url: str, timeout: float | None = None) -> dict:
     settings = get_settings()
     effective_timeout = timeout if timeout is not None else settings.request_timeout
 
-    cleaned_url = url.strip()
+    checked_url, validation_error = prepare_url(url)
 
-    if not cleaned_url:
+    if validation_error:
+        logger.warning("HTTP check validation failed for url=%r: %s", url, validation_error)
         return {
-            "checked_url": "",
+            "checked_url": checked_url,
             "is_up": False,
             "status_code": None,
             "response_time_ms": None,
-            "error": "URL cannot be empty",
+            "error": validation_error,
         }
 
-    checked_url = normalize_url(cleaned_url)
     start_time = time.perf_counter()
 
     try:
+        logger.info("Starting HTTP check for %s", checked_url)
         response = httpx.get(
             checked_url,
             timeout=effective_timeout,
             follow_redirects=True,
         )
         response_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+        logger.info(
+            "HTTP check completed for %s with status=%s in %.2f ms",
+            checked_url,
+            response.status_code,
+            response_time_ms,
+        )
 
         return {
             "checked_url": checked_url,
@@ -50,6 +53,7 @@ def check_http(url: str, timeout: float | None = None) -> dict:
 
     except httpx.TimeoutException:
         response_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.warning("HTTP timeout for %s after %.2f ms", checked_url, response_time_ms)
         return {
             "checked_url": checked_url,
             "is_up": False,
@@ -60,6 +64,7 @@ def check_http(url: str, timeout: float | None = None) -> dict:
 
     except httpx.ConnectError:
         response_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.warning("HTTP connect error for %s after %.2f ms", checked_url, response_time_ms)
         return {
             "checked_url": checked_url,
             "is_up": False,
@@ -69,6 +74,7 @@ def check_http(url: str, timeout: float | None = None) -> dict:
         }
 
     except httpx.InvalidURL:
+        logger.warning("HTTP invalid URL for %s", checked_url)
         return {
             "checked_url": checked_url,
             "is_up": False,
@@ -79,6 +85,7 @@ def check_http(url: str, timeout: float | None = None) -> dict:
 
     except httpx.RequestError as exc:
         response_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.exception("HTTP request error for %s: %s", checked_url, exc.__class__.__name__)
         return {
             "checked_url": checked_url,
             "is_up": False,

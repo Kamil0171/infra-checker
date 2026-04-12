@@ -49,6 +49,17 @@ def test_check_ssl_skips_non_https_url():
     assert result["error"] is None
 
 
+def test_check_ssl_returns_validation_error_for_bad_url():
+    result = check_ssl("bad url")
+
+    assert result["checked_url"] == ""
+    assert result["ssl_enabled"] is None
+    assert result["ssl_valid"] is None
+    assert result["ssl_expires_at"] is None
+    assert result["ssl_days_left"] is None
+    assert result["error"] == "URL cannot contain spaces"
+
+
 def test_check_ssl_returns_certificate_data(mocker):
     certificate = {
         "notAfter": "Dec 31 12:00:00 2099 GMT",
