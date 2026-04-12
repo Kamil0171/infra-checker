@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
 import socket
 import ssl
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 from app.config import get_settings

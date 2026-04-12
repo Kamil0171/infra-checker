@@ -1,153 +1,73 @@
-from datetime import datetime, timezone
-import socket
-import ssl
-from urllib.parse import urlsplit
-
-from app.services.http_check import normalize_url
+from app.services.ssl_check import check_ssl, parse_certificate_expiry
 
 
-def parse_certificate_expiry(not_after: str) -> datetime:
-    expiry = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
-    return expiry.replace(tzinfo=timezone.utc)
+class FakeSocket:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
 
 
-def check_ssl(url: str, timeout: float = 5.0) -> dict:
-    cleaned_url = url.strip()
+class FakeSSLSocket:
+    def __init__(self, certificate: dict):
+        self.certificate = certificate
 
-    if not cleaned_url:
-        return {
-            "checked_url": "",
-            "ssl_enabled": None,
-            "ssl_valid": None,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "URL cannot be empty",
-        }
+    def getpeercert(self):
+        return self.certificate
 
-    checked_url = normalize_url(cleaned_url)
+    def __enter__(self):
+        return self
 
-    try:
-        parsed_url = urlsplit(checked_url)
-    except ValueError:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": None,
-            "ssl_valid": None,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "Invalid URL format",
-        }
+    def __exit__(self, exc_type, exc, tb):
+        return False
 
-    if parsed_url.scheme != "https":
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": False,
-            "ssl_valid": None,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": None,
-        }
 
-    hostname = parsed_url.hostname
-    port = parsed_url.port or 443
+class FakeSSLContext:
+    def __init__(self, certificate: dict):
+        self.certificate = certificate
 
-    if not hostname:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "Could not determine hostname from URL",
-        }
+    def wrap_socket(self, sock, server_hostname):
+        return FakeSSLSocket(self.certificate)
 
-    context = ssl.create_default_context()
 
-    try:
-        with socket.create_connection((hostname, port), timeout=timeout) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as ssl_sock:
-                certificate = ssl_sock.getpeercert()
+def test_parse_certificate_expiry_returns_datetime():
+    expiry = parse_certificate_expiry("Dec 31 12:00:00 2099 GMT")
 
-        if not certificate:
-            return {
-                "checked_url": checked_url,
-                "ssl_enabled": True,
-                "ssl_valid": False,
-                "ssl_expires_at": None,
-                "ssl_days_left": None,
-                "error": "No certificate was provided by the server",
-            }
+    assert expiry.year == 2099
+    assert expiry.month == 12
+    assert expiry.day == 31
 
-        not_after = certificate.get("notAfter")
-        if not not_after:
-            return {
-                "checked_url": checked_url,
-                "ssl_enabled": True,
-                "ssl_valid": False,
-                "ssl_expires_at": None,
-                "ssl_days_left": None,
-                "error": "Certificate expiration date is unavailable",
-            }
 
-        expires_at = parse_certificate_expiry(not_after)
-        now_utc = datetime.now(timezone.utc)
-        days_left = (expires_at - now_utc).days
+def test_check_ssl_skips_non_https_url():
+    result = check_ssl("http://example.com")
 
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": expires_at > now_utc,
-            "ssl_expires_at": expires_at.isoformat(),
-            "ssl_days_left": days_left,
-            "error": None,
-        }
+    assert result["ssl_enabled"] is False
+    assert result["ssl_valid"] is None
+    assert result["ssl_expires_at"] is None
+    assert result["ssl_days_left"] is None
+    assert result["error"] is None
 
-    except ssl.SSLCertVerificationError:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "Certificate verification failed",
-        }
 
-    except ssl.SSLError as exc:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": f"TLS error: {exc.__class__.__name__}",
-        }
+def test_check_ssl_returns_certificate_data(mocker):
+    certificate = {
+        "notAfter": "Dec 31 12:00:00 2099 GMT",
+    }
 
-    except socket.timeout:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "TLS connection timed out",
-        }
+    mocker.patch(
+        "app.services.ssl_check.socket.create_connection",
+        return_value=FakeSocket(),
+    )
+    mocker.patch(
+        "app.services.ssl_check.ssl.create_default_context",
+        return_value=FakeSSLContext(certificate),
+    )
 
-    except socket.gaierror:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": "DNS resolution failed",
-        }
+    result = check_ssl("https://example.com")
 
-    except OSError as exc:
-        return {
-            "checked_url": checked_url,
-            "ssl_enabled": True,
-            "ssl_valid": False,
-            "ssl_expires_at": None,
-            "ssl_days_left": None,
-            "error": f"Connection error: {exc.__class__.__name__}",
-        }
+    assert result["checked_url"] == "https://example.com"
+    assert result["ssl_enabled"] is True
+    assert result["ssl_valid"] is True
+    assert result["ssl_expires_at"] is not None
+    assert result["ssl_days_left"] is not None
+    assert result["error"] is None
