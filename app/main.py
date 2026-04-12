@@ -5,13 +5,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.config import get_settings
 from app.schemas import CheckResponse, HttpCheckResult, SSLCheckResult
 from app.services.http_check import check_http
 from app.services.ssl_check import check_ssl
 
 BASE_DIR = Path(__file__).resolve().parent
+settings = get_settings()
 
-app = FastAPI(title="Infra Checker", version="0.1.0")
+app = FastAPI(title=settings.app_name, version=settings.app_version)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))

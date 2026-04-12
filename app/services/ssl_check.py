@@ -3,6 +3,7 @@ import socket
 import ssl
 from urllib.parse import urlsplit
 
+from app.config import get_settings
 from app.services.http_check import normalize_url
 
 
@@ -11,7 +12,10 @@ def parse_certificate_expiry(not_after: str) -> datetime:
     return expiry.replace(tzinfo=timezone.utc)
 
 
-def check_ssl(url: str, timeout: float = 5.0) -> dict:
+def check_ssl(url: str, timeout: float | None = None) -> dict:
+    settings = get_settings()
+    effective_timeout = timeout if timeout is not None else settings.request_timeout
+
     cleaned_url = url.strip()
 
     if not cleaned_url:
@@ -64,7 +68,7 @@ def check_ssl(url: str, timeout: float = 5.0) -> dict:
     context = ssl.create_default_context()
 
     try:
-        with socket.create_connection((hostname, port), timeout=timeout) as sock:
+        with socket.create_connection((hostname, port), timeout=effective_timeout) as sock:
             with context.wrap_socket(sock, server_hostname=hostname) as ssl_sock:
                 certificate = ssl_sock.getpeercert()
 

@@ -4,3 +4,4 @@ httpx
 jinja2
 pytest
 pytest-mock
+python-dotenv

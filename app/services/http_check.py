@@ -2,6 +2,8 @@ import time
 
 import httpx
 
+from app.config import get_settings
+
 
 def normalize_url(url: str) -> str:
     cleaned_url = url.strip()
@@ -12,7 +14,10 @@ def normalize_url(url: str) -> str:
     return cleaned_url
 
 
-def check_http(url: str, timeout: float = 5.0) -> dict:
+def check_http(url: str, timeout: float | None = None) -> dict:
+    settings = get_settings()
+    effective_timeout = timeout if timeout is not None else settings.request_timeout
+
     cleaned_url = url.strip()
 
     if not cleaned_url:
@@ -30,7 +35,7 @@ def check_http(url: str, timeout: float = 5.0) -> dict:
     try:
         response = httpx.get(
             checked_url,
-            timeout=timeout,
+            timeout=effective_timeout,
             follow_redirects=True,
         )
         response_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
